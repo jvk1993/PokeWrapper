@@ -1,9 +1,19 @@
+using PokeWrapperService.Models;
+using PokeWrapperService.Repositories;
+using PokeWrapperService.Repositories.interfaces;
+using PokeWrapperService.Services;
+using PokeWrapperService.Services.Interfaces;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-
+builder.Services.AddSingleton<IPokemonRepository, PokemonRepository>();
+builder.Services.AddHttpClient<IPokeAPIService, PokeAPIService>(options =>
+{
+    options.BaseAddress = new("https://pokeapi.co/api/v2/");
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -14,28 +24,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
+app.MapGet("/pokemon/{id}", async (int id, IPokemonRepository pokemonRepository) =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    Pokemon? pokemon = await pokemonRepository.GetPokemonById(id);
+    return pokemon is null ? Results.NotFound() : Results.Ok(pokemon);
+}).WithName("GetPokemonById");
 
 app.Run();
-
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

@@ -1,6 +1,6 @@
-@PokeWrapperService_HostAddress = http://localhost:5017
+@PokeWrapperService_HostAddress = https://localhost:7002
 
-GET {{PokeWrapperService_HostAddress}}/weatherforecast/
+GET {{PokeWrapperService_HostAddress}}/pokemon/193
 Accept: application/json
 
 ###
